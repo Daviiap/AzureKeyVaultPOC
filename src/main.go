@@ -1,31 +1,48 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"kvPoc/src/kv"
 	"log"
-	"os"
+	"math/rand"
+	"net/http"
+	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
+	"github.com/gorilla/mux"
 )
 
+type Response struct {
+	Secret *string `json:"secret"`
+}
+
+var secretName = "secret"
+
+func HandleGetSecret(responseWriter http.ResponseWriter, request *http.Request) {
+	responseWriter.Header().Add("Content-Type", "json")
+	client := kv.GetClient()
+
+	secret := client.GetAZKeyVaultSecret(secretName)
+	json.NewEncoder(responseWriter).Encode(Response{
+		Secret: secret.Value,
+	})
+}
+
+func generateRandomSecrets() {
+	client := kv.GetClient()
+
+	for {
+		client.CreateAZKeyVaultSecret(secretName, fmt.Sprint(rand.Int()))
+		time.Sleep(10 * time.Second)
+	}
+}
+
 func main() {
-	keyVaultName := os.Getenv("AZURE_KEY_VAULT_NAME")
-	keyVaultUrl := fmt.Sprintf("https://%s.vault.azure.net/", keyVaultName)
+	go generateRandomSecrets()
 
-	cred, err := azidentity.NewDefaultAzureCredential(nil)
-	if err != nil {
-		log.Fatalf("failed to obtain a credential: %v", err)
-	}
+	router := mux.NewRouter()
 
-	client, err := azsecrets.NewClient(keyVaultUrl, cred, nil)
-	if err != nil {
-		log.Fatalf("failed to create a client: %v", err)
-	}
+	router.HandleFunc("/secret", HandleGetSecret).Methods("GET")
 
-	kv.CreateAZKeyVaultSecret(client, "quickstart-secret", "createdByGo")
-	kv.CreateAZKeyVaultSecret(client, "quickstart-secret", "createdByGo2")
-	kv.GetAZKeyVaultSecret(client, "quickstart-secret")
-	kv.DeleteAZKeyVaultSecret(client, "quickstart-secret")
+	log.Fatal(http.ListenAndServe(":3000", router))
 }
