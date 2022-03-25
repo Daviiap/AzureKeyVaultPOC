@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 )
@@ -31,20 +30,13 @@ func GetAZKeyVaultSecret(client *azsecrets.Client, secretName string) azsecrets.
 	return getResp
 }
 
-func DeleteAZKeyVaultSecret(client *azsecrets.Client, secretName string) azsecrets.DeleteSecretResponse {
-	respDel, err := client.BeginDeleteSecret(context.TODO(), secretName, nil)
+func DeleteAZKeyVaultSecret(client *azsecrets.Client, secretName string) bool {
+	respDel, _ := client.BeginDeleteSecret(context.TODO(), secretName, nil)
 
-	if err != nil {
-		log.Fatalf("failed to delete secret: %v", err)
-	}
-
-	response, err := respDel.PollUntilDone(context.TODO(), time.Second)
-
-	if err != nil {
-		log.Fatalf("failed to delete secret: %v", err)
+	for respDel.Poller.Done() {
 	}
 
 	fmt.Println(secretName + " has been deleted\n")
 
-	return response
+	return respDel.Poller.Done()
 }
