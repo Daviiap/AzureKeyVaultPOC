@@ -7,6 +7,8 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -28,17 +30,24 @@ func HandleGetSecret(responseWriter http.ResponseWriter, request *http.Request) 
 	})
 }
 
-func generateRandomSecrets() {
+func generateRandomSecretsRoutine() {
 	client := kv.GetClient()
 
 	for {
 		client.CreateAZKeyVaultSecret(secretName, fmt.Sprint(rand.Int()))
-		time.Sleep(10 * time.Second)
+
+		sleepTime, parseError := strconv.Atoi(os.Getenv("KEY_REFRESH_RATE"))
+
+		if parseError != nil {
+			log.Fatal("INVALID REFRASH RATE TIME")
+		}
+
+		time.Sleep(time.Duration(sleepTime) * time.Second)
 	}
 }
 
 func main() {
-	go generateRandomSecrets()
+	go generateRandomSecretsRoutine()
 
 	router := mux.NewRouter()
 

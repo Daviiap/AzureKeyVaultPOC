@@ -13,13 +13,13 @@ import (
 
 var once sync.Once
 
-type KeyVaultClient struct {
+type keyVaultSecretsClient struct {
 	azClient azsecrets.Client
 }
 
-var clientInstance *KeyVaultClient
+var clientInstance *keyVaultSecretsClient
 
-func GetClient() *KeyVaultClient {
+func GetClient() *keyVaultSecretsClient {
 	if clientInstance == nil {
 		once.Do(
 			func() {
@@ -36,7 +36,7 @@ func GetClient() *KeyVaultClient {
 					log.Fatalf("failed to create a client: %v", err)
 				}
 
-				clientInstance = &KeyVaultClient{
+				clientInstance = &keyVaultSecretsClient{
 					azClient: *client,
 				}
 			})
@@ -45,7 +45,7 @@ func GetClient() *KeyVaultClient {
 	return clientInstance
 }
 
-func (client KeyVaultClient) CreateAZKeyVaultSecret(secretName string, secretValue string) azsecrets.SetSecretResponse {
+func (client keyVaultSecretsClient) CreateAZKeyVaultSecret(secretName string, secretValue string) azsecrets.SetSecretResponse {
 	resp, err := client.azClient.SetSecret(context.TODO(), secretName, secretValue, nil)
 	if err != nil {
 		log.Fatalf("failed to create a secret: %v", err)
@@ -56,8 +56,8 @@ func (client KeyVaultClient) CreateAZKeyVaultSecret(secretName string, secretVal
 	return resp
 }
 
-func (client KeyVaultClient) GetAZKeyVaultSecret(secretName string) azsecrets.GetSecretResponse {
-	getResp, err := client.azClient.GetSecret(context.TODO(), "quickstart-secret", nil)
+func (client keyVaultSecretsClient) GetAZKeyVaultSecret(secretName string) azsecrets.GetSecretResponse {
+	getResp, err := client.azClient.GetSecret(context.TODO(), secretName, nil)
 	if err != nil {
 		log.Fatalf("failed to get the secret: %v", err)
 	}
@@ -67,7 +67,7 @@ func (client KeyVaultClient) GetAZKeyVaultSecret(secretName string) azsecrets.Ge
 	return getResp
 }
 
-func (client KeyVaultClient) DeleteAZKeyVaultSecret(secretName string) bool {
+func (client keyVaultSecretsClient) DeleteAZKeyVaultSecret(secretName string) bool {
 	respDel, _ := client.azClient.BeginDeleteSecret(context.TODO(), secretName, nil)
 
 	for respDel.Poller.Done() {
