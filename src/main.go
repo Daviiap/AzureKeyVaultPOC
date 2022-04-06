@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"kvPoc/src/kv"
+	"kvPoc/src/azure"
 	"log"
 	"math/rand"
 	"net/http"
@@ -14,7 +14,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type Response struct {
+type SecretsResponse struct {
 	Secret *string `json:"secret"`
 }
 
@@ -22,16 +22,16 @@ var secretName = "secret"
 
 func HandleGetSecret(responseWriter http.ResponseWriter, request *http.Request) {
 	responseWriter.Header().Add("Content-Type", "json")
-	client := kv.GetClient()
+	client := azure.GetSecretsClient()
 
 	secret := client.GetAZKeyVaultSecret(secretName)
-	json.NewEncoder(responseWriter).Encode(Response{
+	json.NewEncoder(responseWriter).Encode(SecretsResponse{
 		Secret: secret.Value,
 	})
 }
 
 func generateRandomSecretsRoutine() {
-	client := kv.GetClient()
+	client := azure.GetSecretsClient()
 
 	for {
 		client.CreateAZKeyVaultSecret(secretName, fmt.Sprint(rand.Int()))
@@ -54,4 +54,10 @@ func main() {
 	router.HandleFunc("/secret", HandleGetSecret).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":3000", router))
+
+	// certsclient := azure.GetCertsClient()
+	// certsclient.CreateCert("newCert")
+	// certsclient.GetCert("newCert")
+	// certsclient.UpdateCert("newCert")
+	// certsclient.DeleteCert("newCert")
 }

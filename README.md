@@ -31,6 +31,7 @@ After creating the KeyVault in Azure, you must set the environment variables to 
 | Variable             | Description                                 |
 | -------------------- | ------------------------------------------- |
 | AZURE_KEY_VAULT_NAME | The name of the KeyVault that you'v created |
+|   KEY_REFRESH_RATE   |     The refresh rate for the saved token    |
 
 ### 3. Running The Application
 

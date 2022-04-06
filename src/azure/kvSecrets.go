@@ -1,4 +1,4 @@
-package kv
+package azure
 
 import (
 	"context"
@@ -7,42 +7,38 @@ import (
 	"os"
 	"sync"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 )
-
-var once sync.Once
 
 type keyVaultSecretsClient struct {
 	azClient azsecrets.Client
 }
 
-var clientInstance *keyVaultSecretsClient
+var getSecretsClientOnce sync.Once
 
-func GetClient() *keyVaultSecretsClient {
-	if clientInstance == nil {
-		once.Do(
+var secretsClientInstance *keyVaultSecretsClient
+
+func GetSecretsClient() *keyVaultSecretsClient {
+	if secretsClientInstance == nil {
+		getSecretsClientOnce.Do(
 			func() {
 				keyVaultName := os.Getenv("AZURE_KEY_VAULT_NAME")
 				keyVaultUrl := fmt.Sprintf("https://%s.vault.azure.net/", keyVaultName)
 
-				cred, err := azidentity.NewDefaultAzureCredential(nil)
-				if err != nil {
-					log.Fatalf("failed to obtain a credential: %v", err)
-				}
+				cred := GetAZIdentity()
 
 				client, err := azsecrets.NewClient(keyVaultUrl, cred, nil)
 				if err != nil {
 					log.Fatalf("failed to create a client: %v", err)
 				}
 
-				clientInstance = &keyVaultSecretsClient{
+				secretsClientInstance = &keyVaultSecretsClient{
 					azClient: *client,
 				}
 			})
 	}
 
-	return clientInstance
+	return secretsClientInstance
 }
 
 func (client keyVaultSecretsClient) CreateAZKeyVaultSecret(secretName string, secretValue string) azsecrets.SetSecretResponse {
