@@ -16,7 +16,7 @@ type keyVaultCertsClient struct {
 }
 
 var (
-	ctx = context.Background()
+	certsCtx = context.Background()
 )
 
 var getKeyVaultCertsOnce sync.Once
@@ -47,7 +47,7 @@ func GetCertsClient() *keyVaultCertsClient {
 }
 
 func (client keyVaultCertsClient) CreateCert(certName string) {
-	resp, err := client.azClient.BeginCreateCertificate(ctx, certName, azcertificates.CertificatePolicy{
+	resp, err := client.azClient.BeginCreateCertificate(certsCtx, certName, azcertificates.CertificatePolicy{
 		IssuerParameters: &azcertificates.IssuerParameters{
 			Name: to.StringPtr("Self"),
 		},
@@ -60,7 +60,7 @@ func (client keyVaultCertsClient) CreateCert(certName string) {
 		panic(err)
 	}
 
-	pollerResp, err := resp.PollUntilDone(ctx, 1*time.Second)
+	pollerResp, err := resp.PollUntilDone(certsCtx, 1*time.Second)
 	if err != nil {
 		panic(err)
 	}
@@ -68,7 +68,7 @@ func (client keyVaultCertsClient) CreateCert(certName string) {
 }
 
 func (client keyVaultCertsClient) GetCert(certName string) {
-	getResp, err := client.azClient.GetCertificate(ctx, certName, nil)
+	getResp, err := client.azClient.GetCertificate(certsCtx, certName, nil)
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func (client keyVaultCertsClient) GetCert(certName string) {
 }
 
 func (client keyVaultCertsClient) UpdateCert(certName string) {
-	_, err := client.azClient.UpdateCertificateProperties(ctx, certName, &azcertificates.UpdateCertificatePropertiesOptions{
+	_, err := client.azClient.UpdateCertificateProperties(certsCtx, certName, &azcertificates.UpdateCertificatePropertiesOptions{
 		Version: "newVersion",
 		CertificateAttributes: &azcertificates.CertificateProperties{
 			Enabled: to.BoolPtr(false),
@@ -91,7 +91,7 @@ func (client keyVaultCertsClient) UpdateCert(certName string) {
 }
 
 func (client keyVaultCertsClient) DeleteCert(certName string) {
-	client.azClient.BeginDeleteCertificate(ctx, certName, nil)
+	client.azClient.BeginDeleteCertificate(certsCtx, certName, nil)
 
 	fmt.Println("Deleted")
 }

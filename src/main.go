@@ -10,8 +10,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 type SecretsResponse struct {
@@ -47,17 +45,17 @@ func generateRandomSecretsRoutine() {
 }
 
 func main() {
-	go generateRandomSecretsRoutine()
+	// go generateRandomSecretsRoutine()
 
-	router := mux.NewRouter()
+	// router := mux.NewRouter()
 
-	router.HandleFunc("/secret", HandleGetSecret).Methods("GET")
+	// router.HandleFunc("/secret", HandleGetSecret).Methods("GET")
 
-	log.Fatal(http.ListenAndServe(":3000", router))
+	// log.Fatal(http.ListenAndServe(":3000", router))
 
-	// certsclient := azure.GetCertsClient()
-	// certsclient.CreateCert("newCert")
-	// certsclient.GetCert("newCert")
-	// certsclient.UpdateCert("newCert")
-	// certsclient.DeleteCert("newCert")
+	keysClient := azure.GetKeysClient()
+
+	// keysClient.CreateRSAKey("newKey")
+	// keysClient.UpdateKey("newKey")
+	keysClient.DeleteKey("newKey")
 }
